@@ -5,16 +5,12 @@ public class BudgetManager {
     private static BudgetManager instance;
     private double budget;
     private double totalExpenses;
-    private ArrayList<Double> expenses;
-    private ArrayList<BudgetObserver> observers;
+    private List<Double> expenses;
 
-    // Private constructor
     private BudgetManager() {
         expenses = new ArrayList<>();
-        observers = new ArrayList<>();
     }
 
-    // Singleton instance retrieval
     public static BudgetManager getInstance() {
         if (instance == null) {
             instance = new BudgetManager();
@@ -22,37 +18,26 @@ public class BudgetManager {
         return instance;
     }
 
-    // Set the budget
     public void setBudget(double budget) {
         this.budget = budget;
     }
 
-    // Add an expense
     public void addExpense(double amount) {
         totalExpenses += amount;
         expenses.add(amount);
-        notifyObservers();
     }
 
-    // Get remaining budget
+    public void removeExpense(double amount) {
+        if (expenses.remove(amount)) { // Remove only the first occurrence
+            totalExpenses -= amount;
+        }
+    }
+
     public double getRemainingBudget() {
         return budget - totalExpenses;
     }
 
-    // Get the list of expenses
     public List<Double> getExpenses() {
-        return new ArrayList<>(expenses);
-    }
-
-    // Register an observer
-    public void registerObserver(BudgetObserver observer) {
-        observers.add(observer);
-    }
-
-    // Notify all observers
-    private void notifyObservers() {
-        for (BudgetObserver observer : observers) {
-            observer.update(totalExpenses, budget);
-        }
+        return new ArrayList<>(expenses); // Return a copy of the list
     }
 }

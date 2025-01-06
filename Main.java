@@ -2,13 +2,12 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.util.List;
 
 public class Main extends Application {
     private BudgetManager manager = BudgetManager.getInstance();
+    private CommandManager commandManager = new CommandManager(); // CommandManager for undo/redo functionality
 
     @Override
     public void start(Stage primaryStage) {
@@ -40,6 +39,9 @@ public class Main extends Application {
         expenseDescriptionField.setPromptText("Description");
         TextField expenseAmountField = new TextField();
         expenseAmountField.setPromptText("Amount");
+        ComboBox<String> categoryDropdown = new ComboBox<>();
+        categoryDropdown.getItems().addAll("Food", "Transport", "Shopping", "Entertainment");
+        categoryDropdown.setPromptText("Select Category");
         CheckBox recurringCheckBox = new CheckBox("Recurring");
         Button addExpenseButton = new Button("Add Expense");
         Label expenseStatusLabel = new Label();
@@ -47,15 +49,26 @@ public class Main extends Application {
         addExpenseButton.setOnAction(e -> {
             try {
                 String description = expenseDescriptionField.getText();
+                String categoryName = categoryDropdown.getValue();
                 double amount = Double.parseDouble(expenseAmountField.getText());
-                Expense expense = new BasicExpense(description, amount);
 
+                if (categoryName == null) {
+                    expenseStatusLabel.setText("Please select a category!");
+                    return;
+                }
+
+                ExpenseCategory category = ExpenseCategoryFactory.createCategory(categoryName);
+
+                Expense expense = new BasicExpense(description, amount);
                 if (recurringCheckBox.isSelected()) {
                     expense = new RecurringExpense(expense);
                 }
 
-                manager.addExpense(amount); // Add to BudgetManager
-                expenseStatusLabel.setText("Expense added: " + expense.getDetails() + ", $" + expense.getAmount());
+                // Execute command
+                AddExpenseCommand addExpenseCommand = new AddExpenseCommand(manager, amount);
+                commandManager.executeCommand(addExpenseCommand);
+
+                expenseStatusLabel.setText("Expense added: " + description + ", $" + amount + " in category " + category.getCategoryName());
             } catch (NumberFormatException ex) {
                 expenseStatusLabel.setText("Invalid expense amount!");
             }
@@ -79,12 +92,28 @@ public class Main extends Application {
             remainingBudgetLabel.setText("Remaining Budget: $" + manager.getRemainingBudget());
         });
 
+        // Undo/Redo Buttons
+        Button undoButton = new Button("Undo");
+        Button redoButton = new Button("Redo");
+        Label undoRedoStatusLabel = new Label();
+
+        undoButton.setOnAction(e -> {
+            commandManager.undo();
+            undoRedoStatusLabel.setText("Undo performed.");
+        });
+
+        redoButton.setOnAction(e -> {
+            commandManager.redo();
+            undoRedoStatusLabel.setText("Redo performed.");
+        });
+
         // Add components to layout
         layout.getChildren().addAll(
                 budgetLabel, budgetField, setBudgetButton, budgetStatusLabel,
-                expenseLabel, expenseDescriptionField, expenseAmountField, recurringCheckBox, addExpenseButton, expenseStatusLabel,
+                expenseLabel, expenseDescriptionField, expenseAmountField, categoryDropdown, recurringCheckBox, addExpenseButton, expenseStatusLabel,
                 viewExpensesButton, expenseListView,
-                viewBudgetButton, remainingBudgetLabel
+                viewBudgetButton, remainingBudgetLabel,
+                undoButton, redoButton, undoRedoStatusLabel
         );
 
         // Create the scene
