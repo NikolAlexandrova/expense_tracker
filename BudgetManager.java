@@ -5,12 +5,16 @@ public class BudgetManager {
     private static BudgetManager instance;
     private double budget;
     private double totalExpenses;
-    private List<Double> expenses;
+    private List<ExpenseEntry> expenses; // List to hold expense entries
+    private List<BudgetObserver> observers; // List to hold budget observers
 
+    // Private constructor
     private BudgetManager() {
         expenses = new ArrayList<>();
+        observers = new ArrayList<>();
     }
 
+    // Singleton instance retrieval
     public static BudgetManager getInstance() {
         if (instance == null) {
             instance = new BudgetManager();
@@ -18,26 +22,51 @@ public class BudgetManager {
         return instance;
     }
 
+    // Set the budget
     public void setBudget(double budget) {
         this.budget = budget;
+        notifyObservers();
     }
 
-    public void addExpense(double amount) {
-        totalExpenses += amount;
-        expenses.add(amount);
+    // Add an expense
+    public void addExpense(double amount, String description, String currency, double convertedAmount) {
+        totalExpenses += convertedAmount;
+        expenses.add(new ExpenseEntry(description, amount, currency, convertedAmount));
+        notifyObservers();
     }
 
-    public void removeExpense(double amount) {
-        if (expenses.remove(amount)) { // Remove only the first occurrence
-            totalExpenses -= amount;
+    // Remove an expense
+    public boolean removeExpense(String description, double convertedAmount) {
+        for (ExpenseEntry expense : expenses) {
+            if (expense.getDescription().equals(description) && expense.getConvertedAmount() == convertedAmount) {
+                expenses.remove(expense);
+                totalExpenses -= convertedAmount;
+                notifyObservers();
+                return true;
+            }
         }
+        return false;
     }
 
+    // Get remaining budget
     public double getRemainingBudget() {
         return budget - totalExpenses;
     }
 
-    public List<Double> getExpenses() {
-        return new ArrayList<>(expenses); // Return a copy of the list
+    // Get a copy of the expense list
+    public List<ExpenseEntry> getExpenses() {
+        return new ArrayList<>(expenses);
+    }
+
+    // Register a budget observer
+    public void registerObserver(BudgetObserver observer) {
+        observers.add(observer);
+    }
+
+    // Notify all observers
+    private void notifyObservers() {
+        for (BudgetObserver observer : observers) {
+            observer.update(totalExpenses, budget);
+        }
     }
 }
