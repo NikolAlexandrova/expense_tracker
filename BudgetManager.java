@@ -29,11 +29,12 @@ public class BudgetManager {
     }
 
     // Add an expense
-    public void addExpense(double amount, String description, String currency, double convertedAmount) {
+    public void addExpense(double amount, String description, String currency, double convertedAmount, String category) {
         totalExpenses += convertedAmount;
-        expenses.add(new ExpenseEntry(description, amount, currency, convertedAmount));
+        expenses.add(new ExpenseEntry(description, amount, currency, convertedAmount, category));
         notifyObservers();
     }
+
 
     // Remove an expense
     public boolean removeExpense(String description, double convertedAmount) {
