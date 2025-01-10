@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
     private BudgetManager manager = BudgetManager.getInstance();
     private CurrencyAdapter currencyAdapter = new CurrencyAdapterImpl(new ExternalCurrencyService());
+    private CommandManager commandManager = new CommandManager(); // CommandManager for undo/redo functionality
 
     @Override
     public void start(Stage primaryStage) {
@@ -51,11 +52,11 @@ public class Main extends Application {
 
         addExpenseButton.setOnAction(e -> {
             try {
-                String description = expenseDescriptionField.getText(); // Get description
-                double amount = Double.parseDouble(expenseAmountField.getText()); // Get original amount
-                String selectedCurrency = currencyDropdown.getValue(); // Get selected currency from dropdown
-                String categoryName = categoryDropdown.getValue(); // Get selected category
-                double convertedAmount = currencyAdapter.convertToBaseCurrency(amount, selectedCurrency); // Convert to base currency
+                String description = expenseDescriptionField.getText();
+                double amount = Double.parseDouble(expenseAmountField.getText());
+                String selectedCurrency = currencyDropdown.getValue();
+                String categoryName = categoryDropdown.getValue();
+                double convertedAmount = currencyAdapter.convertToBaseCurrency(amount, selectedCurrency);
 
                 if (categoryName == null) {
                     expenseStatusLabel.setText("Please select a category!");
@@ -64,8 +65,11 @@ public class Main extends Application {
 
                 ExpenseCategory category = ExpenseCategoryFactory.createCategory(categoryName);
 
-                // Add expense with all required arguments
-                manager.addExpense(amount, description, selectedCurrency, convertedAmount, category.getCategoryName());
+                // Create and execute the command for adding an expense
+                AddExpenseCommand addExpenseCommand = new AddExpenseCommand(
+                        manager, amount, description, selectedCurrency, convertedAmount, category.getCategoryName()
+                );
+                commandManager.executeCommand(addExpenseCommand);
 
                 expenseStatusLabel.setText("Expense added: " + description + " (" + selectedCurrency + " " + amount + " -> USD $" + convertedAmount + ", Category: " + category.getCategoryName() + ")");
             } catch (NumberFormatException ex) {
@@ -74,12 +78,12 @@ public class Main extends Application {
         });
 
         // View Expenses
-        Button viewExpensesButton = new Button("View All Expenses");
+        Label expensesLabel = new Label("Expenses:");
         ListView<String> expenseListView = new ListView<>();
 
+        Button viewExpensesButton = new Button("View All Expenses");
         viewExpensesButton.setOnAction(e -> {
             expenseListView.getItems().clear();
-            // Convert expenses to strings for ListView
             manager.getExpenses().forEach(expense -> expenseListView.getItems().add(expense.toString()));
         });
 
@@ -91,16 +95,40 @@ public class Main extends Application {
             remainingBudgetLabel.setText("Remaining Budget: $" + manager.getRemainingBudget());
         });
 
+        // Undo/Redo Buttons
+        Button undoButton = new Button("Undo");
+        Button redoButton = new Button("Redo");
+        Label undoRedoStatusLabel = new Label();
+
+        undoButton.setOnAction(e -> {
+            if (!commandManager.getUndoStack().isEmpty()) {
+                commandManager.undo();
+                undoRedoStatusLabel.setText("Undo performed.");
+            } else {
+                undoRedoStatusLabel.setText("No actions to undo.");
+            }
+        });
+
+        redoButton.setOnAction(e -> {
+            if (!commandManager.getRedoStack().isEmpty()) {
+                commandManager.redo();
+                undoRedoStatusLabel.setText("Redo performed.");
+            } else {
+                undoRedoStatusLabel.setText("No actions to redo.");
+            }
+        });
+
         // Add components to layout
         layout.getChildren().addAll(
                 budgetLabel, budgetField, setBudgetButton, budgetStatusLabel,
                 expenseLabel, expenseDescriptionField, expenseAmountField, currencyDropdown, categoryDropdown, recurringCheckBox, addExpenseButton, expenseStatusLabel,
-                viewExpensesButton, expenseListView,
-                viewBudgetButton, remainingBudgetLabel
+                expensesLabel, expenseListView,
+                viewExpensesButton, viewBudgetButton, remainingBudgetLabel,
+                undoButton, redoButton, undoRedoStatusLabel
         );
 
         // Create the scene
-        Scene scene = new Scene(layout, 400, 600);
+        Scene scene = new Scene(layout, 400, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
