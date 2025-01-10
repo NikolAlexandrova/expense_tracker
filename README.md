@@ -337,4 +337,8 @@ This project was developed collaboratively to fulfill the requirements of a desi
   - "You are approaching your budget limit!"
 
 ---
+# The application working
+<img width="398" alt="Screenshot 2025-01-10 at 20 12 37" src="https://github.com/user-attachments/assets/46828c14-9c0e-407b-9020-0b4144fec46e" />
+<img width="395" alt="Screenshot 2025-01-10 at 20 12 58" src="https://github.com/user-attachments/assets/eb7334f6-4cbe-400d-8aad-5acd8c73b7c9" />
+
 
