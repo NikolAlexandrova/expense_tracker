@@ -4,6 +4,7 @@
 The Expense Tracker is a Java application designed to help users manage their expenses and budgets. The program demonstrates the use of multiple software design patterns to achieve modularity, scalability, and maintainability. Users can add expenses, categorize them, view their total spending, and compare it to a preset budget. Alerts are provided when the budget is exceeded.
 
 This project was developed collaboratively to fulfill the requirements of a design pattern assignment.
+Link to the GitHub repository: https://github.com/NikolAlexandrova/expense_tracker
 
 ---
 
