@@ -285,14 +285,56 @@ This project was developed collaboratively to fulfill the requirements of a desi
 
 ---
 
-### **How to Run**
-1. Ensure you have JavaFX installed and configured.
-2. Launch the application from the `Main.java` file.
-3. Test:
-   - Set a budget.
-   - Add expenses with categories.
-   - Use "Undo" and "Redo" to test the command pattern.
-   - View alerts when the budget is exceeded.
+# How to Use the Expense Tracker
+
+## Prerequisites
+- Ensure **JavaFX** is installed and configured in your IDE.
+  - Add the required JavaFX library or SDK to your project.
+  - Update your IDE's run configurations to include JavaFX VM options, e.g., `--module-path /path/to/javafx-sdk/lib --add-modules javafx.controls,javafx.fxml`.
+
+---
+
+## 1. Launch the Application
+- Open the project in your IDE.
+- Run the `Main` class to start the application.
+
+---
+
+## 2. Set a Budget
+1. Enter your desired budget in the **"Set Budget"** field.
+2. Click **"Set Budget"** to confirm.
+
+---
+
+## 3. Add an Expense
+1. Fill out the **"Add Expense"** fields:
+   - **Description**, **Amount**, **Currency**, **Category**, and (optional) **Recurring**.
+2. The currency will be automatically converted to USD using real-time exchange rates (mocked in this application).
+3. Click **"Add Expense"** to save it.
+4. A confirmation message will display the added expense, category, and converted amount.
+
+---
+
+## 4. View Expenses
+- Click **"View All Expenses"** to see a list of all saved expenses, including their categories, currencies, and converted amounts.
+
+---
+
+## 5. Check Remaining Budget
+- Click **"View Remaining Budget"** to see how much budget is left after the converted expenses are deducted.
+
+---
+
+## 6. Undo/Redo Actions
+- Click **"Undo"** to reverse the last action or **"Redo"** to reapply a reversed action.
+- Confirmation messages will indicate success or failure.
+
+---
+
+## 7. Budget Alerts
+- Warnings will display if expenses approach or exceed your budget:
+  - "You have exceeded your budget!"
+  - "You are approaching your budget limit!"
 
 ---
 
