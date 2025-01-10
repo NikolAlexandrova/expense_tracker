@@ -47,36 +47,81 @@ This project was developed collaboratively to fulfill the requirements of a desi
    - **Purpose:** Ensures only one instance of the `BudgetManager` exists globally.
    - **Implementation:**
      ```java
-     public class BudgetManager {
-         private static BudgetManager instance;
-         private double budget;
-         private List<Double> expenses;
+     import java.util.ArrayList;
+      import java.util.List;
 
-         private BudgetManager() {
-             expenses = new ArrayList<>();
-         }
+      public class BudgetManager {
+       private static BudgetManager instance;
+       private double budget;
+       private double totalExpenses;
+       private List<ExpenseEntry> expenses; // List to hold expense entries
+       private List<BudgetObserver> observers; // List to hold budget observers
 
-         public static BudgetManager getInstance() {
-             if (instance == null) {
-                 instance = new BudgetManager();
-             }
-             return instance;
-         }
+       // Private constructor
+       private BudgetManager() {
+           expenses = new ArrayList<>();
+           observers = new ArrayList<>();
+       }
 
-         public void setBudget(double budget) {
-             this.budget = budget;
-         }
+       // Singleton instance retrieval
+       public static BudgetManager getInstance() {
+           if (instance == null) {
+               instance = new BudgetManager();
+           }
+           return instance;
+       }
 
-         public double getRemainingBudget() {
-             return budget - expenses.stream().mapToDouble(Double::doubleValue).sum();
-         }
+       // Set the budget
+       public void setBudget(double budget) {
+           this.budget = budget;
+           notifyObservers();
+       }
 
-         public void addExpense(double amount) {
-             expenses.add(amount);
-         }
-     }
-     ```
-   - **Explanation:** The `BudgetManager` ensures all expense and budget management is handled by a single instance, preventing duplication of budget data across the application.
+       // Add an expense
+       public void addExpense(double amount, String description, String currency, double convertedAmount, String category) {
+           totalExpenses += convertedAmount;
+           expenses.add(new ExpenseEntry(description, amount, currency, convertedAmount, category));
+           notifyObservers();
+       }
+
+
+       // Remove an expense
+       public boolean removeExpense(String description, double convertedAmount) {
+           for (ExpenseEntry expense : expenses) {
+               if (expense.getDescription().equals(description) && expense.getConvertedAmount() == convertedAmount) {
+                   expenses.remove(expense);
+                   totalExpenses -= convertedAmount;
+                   notifyObservers();
+                   return true;
+               }
+           }
+           return false;
+       }
+
+       // Get remaining budget
+       public double getRemainingBudget() {
+           return budget - totalExpenses;
+       }
+
+       // Get a copy of the expense list
+       public List<ExpenseEntry> getExpenses() {
+           return new ArrayList<>(expenses);
+       }
+
+       // Register a budget observer
+       public void registerObserver(BudgetObserver observer) {
+           observers.add(observer);
+       }
+
+       // Notify all observers
+       private void notifyObservers() {
+           for (BudgetObserver observer : observers) {
+               observer.update(totalExpenses, budget);
+              }
+          }
+      }
+     
+- **Explanation:** The `BudgetManager` ensures all expense and budget management is handled by a single instance, preventing duplication of budget data across the application.
 
 2. **Factory Method**
    - **Purpose:** Dynamically creates different expense categories (e.g., Food, Transport, Shopping).
@@ -123,17 +168,6 @@ This project was developed collaboratively to fulfill the requirements of a desi
              return decoratedExpense.getDetails();
          }
      }
-
-     public class RecurringExpense extends ExpenseDecorator {
-         public RecurringExpense(Expense decoratedExpense) {
-             super(decoratedExpense);
-         }
-
-         @Override
-         public String getDetails() {
-             return decoratedExpense.getDetails() + " (Recurring)";
-         }
-     }
      ```
    - **Explanation:** The `RecurringExpense` class extends the functionality of basic expenses to indicate recurring charges without modifying the `Expense` class directly.
 
@@ -141,8 +175,8 @@ This project was developed collaboratively to fulfill the requirements of a desi
    - **Purpose:** Adapts external APIs (e.g., mock APIs for currency exchange rates) to work with the application's expense system seamlessly.
    - **Implementation:**
      ```java
-     // External Mock API
-     public class MockCurrencyAPI {
+     // ExternalCurrencyService
+     public class ExternalCurrencyService {
          public double getExchangeRate(String currency) {
              // Simulates an API call for exchange rates
              switch (currency) {
@@ -157,42 +191,27 @@ This project was developed collaboratively to fulfill the requirements of a desi
              }
          }
      }
+     
+     // CurrencyAdapter.java
+      public interface CurrencyAdapter {
+          double convertToBaseCurrency(double amount, String currencyCode);
+      }
 
-     // Adapter Interface
-     public interface CurrencyConverter {
-         double convert(double amount);
-     }
 
-     // Adapter Class
-     public class CurrencyAdapter implements CurrencyConverter {
-         private MockCurrencyAPI mockCurrencyAPI;
-         private String targetCurrency;
+     // CurrencyAdapterImpl.java
+      public class CurrencyAdapterImpl implements CurrencyAdapter {
+          private ExternalCurrencyService externalService;
 
-         public CurrencyAdapter(MockCurrencyAPI mockCurrencyAPI, String targetCurrency) {
-             this.mockCurrencyAPI = mockCurrencyAPI;
-             this.targetCurrency = targetCurrency;
-         }
+          public CurrencyAdapterImpl(ExternalCurrencyService service) {
+              this.externalService = service;
+          }
 
-         @Override
-         public double convert(double amount) {
-             double exchangeRate = mockCurrencyAPI.getExchangeRate(targetCurrency);
-             return amount * exchangeRate;
-         }
-     }
-
-     // Example Usage
-     public class CurrencyAdapterExample {
-         public static void main(String[] args) {
-             MockCurrencyAPI mockAPI = new MockCurrencyAPI();
-             CurrencyAdapter adapter = new CurrencyAdapter(mockAPI, "EUR");
-
-             double amountInUSD = 100;
-             double amountInEUR = adapter.convert(amountInUSD);
-
-             System.out.println("Amount in USD: $" + amountInUSD);
-             System.out.println("Amount in EUR: €" + amountInEUR);
-         }
-     }
+          @Override
+          public double convertToBaseCurrency(double amount, String currencyCode) {
+              double rate = externalService.getExchangeRate(currencyCode);
+              return amount * rate;
+          }
+      }
      ```
    - **Explanation:** The `CurrencyAdapter` bridges the gap between the application's internal logic and the `MockCurrencyAPI`. It allows the system to seamlessly convert expense amounts into different currencies without altering the core functionality of the application.
 
@@ -205,16 +224,18 @@ This project was developed collaboratively to fulfill the requirements of a desi
    - **Implementation:**
      ```java
      public interface BudgetObserver {
-         void update(double remainingBudget);
+         void update(double totalExpenses, double budget);
      }
 
      public class BudgetAlert implements BudgetObserver {
          @Override
-         public void update(double remainingBudget) {
-             if (remainingBudget < 50) {
-                 System.out.println("Alert: You are approaching your budget limit!");
-             }
-         }
+          public void update(double totalExpenses, double budget) {
+              if (totalExpenses > budget) {
+                  System.out.println("Warning: You have exceeded your budget!");
+              } else if (totalExpenses > 0.9 * budget) {
+                  System.out.println("Alert: You are approaching your budget limit!");
+              }
+          }
      }
      ```
    - **Explanation:** The `BudgetObserver` interface and `BudgetAlert` class ensure the system reacts dynamically to budget changes.
@@ -230,25 +251,36 @@ This project was developed collaboratively to fulfill the requirements of a desi
      }
 
      public class AddExpenseCommand implements Command {
-         private BudgetManager manager;
-         private double amount;
+       private BudgetManager manager;
+       private double amount;
+       private String description;
+       private String currency;
+       private double convertedAmount;
+       private String category; // Added category
 
-         public AddExpenseCommand(BudgetManager manager, double amount) {
-             this.manager = manager;
-             this.amount = amount;
-         }
+       public AddExpenseCommand(BudgetManager manager, double amount, String description, String currency, double convertedAmount, String category) {
+           this.manager = manager;
+           this.amount = amount;
+           this.description = description;
+           this.currency = currency;
+           this.convertedAmount = convertedAmount;
+           this.category = category; // Initialize category
+       }
 
-         @Override
-         public void execute() {
-             manager.addExpense(amount);
-         }
+       @Override
+       public void execute() {
+           manager.addExpense(amount, description, currency, convertedAmount, category); // Pass category
+       }
 
-         @Override
-         public void undo() {
-             manager.removeExpense(amount);
-         }
-     }
-     ```
+       @Override
+       public void undo() {
+           boolean success = manager.removeExpense(description, convertedAmount);
+           if (!success) {
+               System.out.println("Undo failed: Expense not found.");
+           }
+       }
+      }
+     
    - **Explanation:** The `Command` interface standardizes how undoable actions are handled, ensuring consistency.
 
 ---
