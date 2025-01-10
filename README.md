@@ -27,8 +27,8 @@ This project was developed collaboratively to fulfill the requirements of a desi
 ## Team members
 | Name  | Role |
 | ------------- | ------------- |
-| Nicole Alexandrova  | Developer (Singleton, Observer, and BudgetManager functionality)  |
-| Gabriella Khayutin  | Developer (Factory Method, Command, and user interaction handling)  |
+| Nicole Alexandrova  | Developer (Singleton, Observer, Adapter pattern and BudgetManager functionality)  |
+| Gabriella Khayutin  | Developer (Factory Method, Command, Adapter pattern and user interaction handling)  |
 
 ---
 
@@ -36,8 +36,8 @@ This project was developed collaboratively to fulfill the requirements of a desi
 
 | Team Member       | Contributions                                                                 |
 |-------------------|------------------------------------------------------------------------------|
-| [Nicole Alexandrova]       | - Implemented the Singleton pattern for `BudgetManager` to manage expenses and budgets globally. <br> - Implemented the Observer pattern to send budget alerts when expenses exceed or approach the budget limit. <br> - Contributed to testing and debugging the program. |
-| [Gabriella Khayutin]   | - Implemented the Factory Method to dynamically create expense categories (e.g., Food, Transport, Entertainment). <br> - Implemented the Command pattern to handle undo/redo functionality for adding and removing expenses. <br> - Contributed to user interaction logic and debugging. |
+| [Nicole Alexandrova]       | - Implemented the Singleton pattern for `BudgetManager` to manage expenses and budgets globally. <br> - Implemented the Observer pattern to send budget alerts when expenses exceed or approach the budget limit. <br> - Contributed to the program's Adapter pattern creation, testing, and debugging. |
+| [Gabriella Khayutin]   | - Implemented the Factory Method to dynamically create expense categories (e.g., Food, Transport, Entertainment). <br> - Implemented the Command pattern to handle undo/redo functionality for adding and removing expenses. <br> - Contributed to the Adapter pattern creation, user interaction logic, and debugging. |
 
 
 ## Design Patterns code + explaination
